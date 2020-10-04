@@ -1,0 +1,107 @@
+---
+# Source: mysql/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql-sample
+  namespace: mysql-ns
+  labels:
+    app: mysql-sample
+    chart: "mysql-1.6.7"
+    release: "mysql-sample"
+    heritage: "Helm"
+
+spec:
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: mysql-sample
+      release: mysql-sample
+  template:
+    metadata:
+      labels:
+        app: mysql-sample
+        release: mysql-sample
+    spec:
+      serviceAccountName: default
+      initContainers:
+      - name: "remove-lost-found"
+        image: "busybox:1.32"
+        imagePullPolicy: "IfNotPresent"
+        resources:
+          requests:
+            cpu: 10m
+            memory: 10Mi
+        command:  ["rm", "-fr", "/var/lib/mysql/lost+found"]
+        volumeMounts:
+        - name: data
+          mountPath: /var/lib/mysql
+      # - name: do-something
+      #   image: busybox
+      #   command: ['do', 'something']
+      
+      containers:
+      - name: mysql-sample
+        image: "mysql:5.7.30"
+        imagePullPolicy: "IfNotPresent"
+        resources:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mysql-sample
+              key: mysql-root-password
+        - name: MYSQL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mysql-sample
+              key: mysql-password
+              optional: true
+        - name: MYSQL_USER
+          value: ""
+        - name: MYSQL_DATABASE
+          value: ""
+        - name: TZ
+          value: Asia/Tokyo
+        ports:
+        - name: mysql
+          containerPort: 3306
+        livenessProbe:
+          exec:
+            command:
+            - sh
+            - -c
+            - "mysqladmin ping -u root -p${MYSQL_ROOT_PASSWORD}"
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          successThreshold: 1
+          failureThreshold: 3
+        readinessProbe:
+          exec:
+            command:
+            - sh
+            - -c
+            - "mysqladmin ping -u root -p${MYSQL_ROOT_PASSWORD}"
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          timeoutSeconds: 1
+          successThreshold: 1
+          failureThreshold: 3
+        volumeMounts:
+        - name: data
+          mountPath: /var/lib/mysql
+        # - name: extras
+        #   mountPath: /usr/share/extras
+        #   readOnly: true
+        
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: mysql-sample
+      # - name: extras
+      #   emptyDir: {}

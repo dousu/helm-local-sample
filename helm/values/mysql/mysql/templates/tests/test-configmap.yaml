@@ -1,0 +1,17 @@
+---
+# Source: mysql/templates/tests/test-configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mysql-sample-test
+  namespace: mysql-ns
+  labels:
+    app: mysql-sample
+    chart: "mysql-1.6.7"
+    heritage: "Helm"
+    release: "mysql-sample"
+data:
+  run.sh: |-
+    @test "Testing MySQL Connection" {
+      mysql --host=mysql-sample --port=3306 -u root -ptesting
+    }

@@ -1,0 +1,18 @@
+---
+# Source: mysql/templates/pvc.yaml
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: mysql-sample
+  namespace: mysql-ns
+  labels:
+    app: mysql-sample
+    chart: "mysql-1.6.7"
+    release: "mysql-sample"
+    heritage: "Helm"
+spec:
+  accessModes:
+    - "ReadWriteOnce"
+  resources:
+    requests:
+      storage: "8Gi"
