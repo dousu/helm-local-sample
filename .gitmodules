@@ -1,0 +1,3 @@
+[submodule "dev-containers-repo"]
+	path = dev-containers-repo
+	url = https://github.com/dousu/dousu-vscode-dev-containers.git
